@@ -1,0 +1,10 @@
+{
+    "name": "jubo_deps",
+    "version": "0.0.1",
+    "engines": {
+        "node": "0.10.42"
+    },
+    "dependencies":{
+        "noble": "1.6.0"
+    }
+}
