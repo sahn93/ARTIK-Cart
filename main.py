@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import sys
 import math
 import time
@@ -27,18 +28,13 @@ t_interval = imu.IMUGetPollInterval()/1000.0
 
 diameter = 3.4
 pin = 18
+if os.path.exists('/sys/class/gpio/gpio%d/direction' % pin):
+    with open('/sys/class/gpio/unexport', 'w') as f:
+        f.write(str(pin))
 with open('/sys/class/gpio/export', 'w') as f:
     f.write(str(pin))
 with open('/sys/class/gpio/gpio%d/direction' % pin, 'w') as f:
     f.write('in')
-
-def safe_exit(signal=None, frame=None):
-    print('GOOD BYE!')
-    with open('/sys/class/gpio/unexport', 'w') as f:
-        f.write(str(pin))
-    sys.exit(0)
-signal.signal(signal.SIGTERM, safe_exit)
-signal.signal(signal.SIGINT, safe_exit)
 
 (x, y, w_prev, theta_prev, theta_curr) = (0, 0, 0, 0, 0)
 s_prev = False
