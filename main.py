@@ -4,16 +4,13 @@ import sys
 import math
 import time
 import RTIMU
-import pprint
+import signal
 from config import CALIB_FILE, LOCATIONS, TXPOWER
-from math import sqrt, pow, degrees
-from subprocess import Popen, PIPE
+from math import pi, sqrt, pow, degrees
 
 
 def distance(rssi):
     return sqrt(pow(10, (TXPOWER - rssi) / 10))
-
-"Initialize"
 
 s = RTIMU.Settings(CALIB_FILE)
 imu = RTIMU.RTIMU(s)
@@ -35,35 +32,26 @@ with open('/sys/class/gpio/export', 'w') as f:
 with open('/sys/class/gpio/gpio%d/direction' % pin, 'w') as f:
     f.write('in')
 
+def safe_exit(signal=None, frame=None):
+    print('GOOD BYE!')
+    with open('/sys/class/gpio/unexport', 'w') as f:
+        f.write(str(pin))
+    sys.exit(0)
+signal.signal(signal.SIGTERM, safe_exit)
+signal.signal(signal.SIGINT, safe_exit)
+
 x, y = (0, 0)
-yaws = []
+yaw = None
 s_prev = False
 while True:
     time.sleep(t_interval)
     if imu.IMURead():
         data = imu.getIMUData()
-        yaws.append(data['fusionPose'][2])
+        yaw = data['fusionPose'][2]
     with open('/sys/class/gpio/gpio%d/value' % pin, 'rb', 0) as f:
         s_curr = f.read() == b'0\n'
     if s_prev is not s_curr:
         s_prev = s_curr
         if not s_prev:
-            yaw = sum(yaws)/len(yaws)
-            yaws = []
-            x += math.pi*diameter*math.cos(yaw)
-            y += math.pi*diameter*math.sin(yaw)
-
-sys.exit(0)
-
-with Popen(['node', 'location.js'], stdout=PIPE) as scan:
-    distances = {beacon: [] for beacon in LOCATIONS}
-    while True:
-        addr, rssi = scan.stdout.readline().split()
-        addr = addr.decode()
-        if addr in distances.keys():
-            if len(distances[addr]) == 10:
-                distances[addr].pop(0)
-            distances[addr].append(int(rssi))
-        if all(map(lambda x: len(x) == 10, distances.values())):
-            foo = {x: distance(sum(distances[x])/10) for x in distances.keys()}
-            print(foo)  # TODO
+            x += pi*diameter*math.cos(yaw)
+            y += pi*diameter*math.sin(yaw)
