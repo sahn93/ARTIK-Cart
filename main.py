@@ -40,18 +40,23 @@ def safe_exit(signal=None, frame=None):
 signal.signal(signal.SIGTERM, safe_exit)
 signal.signal(signal.SIGINT, safe_exit)
 
-x, y = (0, 0)
-yaw = None
+(x, y, w_prev, theta_prev, theta_curr) = (0, 0, 0, 0, 0)
 s_prev = False
+dt = 0.01
 while True:
     time.sleep(t_interval)
     if imu.IMURead():
         data = imu.getIMUData()
-        yaw = data['fusionPose'][2]
+        w_curr = data['gyro'][2]
+        theta_curr += 0.5*dt*(w_prev + w_curr)
+        w_prev = w_curr
     with open('/sys/class/gpio/gpio%d/value' % pin, 'rb', 0) as f:
         s_curr = f.read() == b'0\n'
     if s_prev is not s_curr:
         s_prev = s_curr
         if not s_prev:
-            x += pi*diameter*math.cos(yaw)
-            y += pi*diameter*math.sin(yaw)
+            theta = 0.5*(theta_prev + theta_curr)
+            x += pi*diameter*math.cos(theta)
+            y += pi*diameter*math.sin(theta)
+            theta_prev = theta_curr
+            print((x, y))
