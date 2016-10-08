@@ -1,14 +1,13 @@
 #!/usr/bin/python3
-
 import os
 import sys
 import math
 import time
 import RTIMU
 import signal
+import subprocess
 from config import CALIB_FILE, LOCATIONS, TXPOWER
 from math import pi, sqrt, pow, degrees
-
 
 def distance(rssi):
     return sqrt(pow(10, (TXPOWER - rssi) / 10))
@@ -42,6 +41,7 @@ dt = 0.01
 with open('./coordinates.csv', 'w') as ff:
     ff.write("x(cm), y(cm), time_interval(s)\n")
     tstart = time.time()
+    subprocess.Popen(["./liveplot.py"])
     while True:
         time.sleep(t_interval)
         if imu.IMURead():
@@ -60,4 +60,5 @@ with open('./coordinates.csv', 'w') as ff:
                 theta_prev = theta_curr
                 print("%.1fcm, %.1fcm, %.1fs" % (x, y, time.time() - tstart))
                 ff.write("%.1f, %.1f, %.1f\n" % (x, y, time.time() - tstart))
-                tstart = time.time();
+                tstart = time.time()
+                ff.flush()
