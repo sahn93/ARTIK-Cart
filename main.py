@@ -35,7 +35,7 @@ with open('/sys/class/gpio/export', 'w') as f:
 with open('/sys/class/gpio/gpio%d/direction' % pin, 'w') as f:
     f.write('in')
 
-(x, y, w_prev, theta_prev, theta_curr) = (0, 0, 0, 0, 0)
+(x, y, w_prev, theta_prev, theta_curr) = (150, 150, 0, 0, 0)
 s_prev = False
 dt = 0.01
 with open('./coordinates.csv', 'w') as ff:

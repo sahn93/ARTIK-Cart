@@ -10,6 +10,7 @@ __pycache__/
 # C extensions
 *.so
 
+coordinates.csv
 # Distribution / packaging
 .Python
 env/
