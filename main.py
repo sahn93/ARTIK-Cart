@@ -15,7 +15,7 @@ def distance(rssi):
 
 host, port = os.environ['SERVER'].split(':')
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.connect((host, port))
+server.connect((host, int(port)))
 print('Connected to the server')
 
 s = RTIMU.Settings(CALIB_FILE)
@@ -27,8 +27,8 @@ else:
     print('IMU Init Succeeded: ' + imu.IMUName())
 imu.setSlerpPower(0.02)
 imu.setGyroEnable(True)
-imu.setAccelEnable(True)
-imu.setCompassEnable(True)
+imu.setAccelEnable(False)
+imu.setCompassEnable(False)
 t_interval = imu.IMUGetPollInterval()/1000.0
 
 diameter = 3.4
