@@ -13,8 +13,7 @@ from math import pi, sqrt, pow, degrees
 def distance(rssi):
     return sqrt(pow(10, (TXPOWER - rssi) / 10))
 
-host = os.environ['HOST']
-port = 53516
+host, port = os.environ['SERVER'].split(':')
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect((host, port))
 print('Connected to the server')

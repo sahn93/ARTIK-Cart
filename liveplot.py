@@ -7,9 +7,7 @@ import pickle
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-
-host = '10.42.0.1'
-port = 53516
+host, port = os.environ['SERVER'].split(':')
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((host, port))
 s.listen(True)
