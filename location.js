@@ -1,5 +1,7 @@
 var noble = require('noble');
 
+console.log('mac addr, rssi')
+
 noble.on('stateChange', function(state) {
     if (state === 'poweredOn') {
         noble.startScanning([], true);
@@ -9,5 +11,5 @@ noble.on('stateChange', function(state) {
 });
 
 noble.on('discover', function(peripheral) {
-    console.log(peripheral.address + ' ' + peripheral.rssi)
+    console.log(peripheral.address + ',' + peripheral.rssi)
 });

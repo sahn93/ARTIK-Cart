@@ -38,7 +38,6 @@ t_interval = imu.IMUGetPollInterval()/1000.0
 
 # initialize light sensor
 
-diameter = 3.4
 pin = 12
 if os.path.exists('/sys/class/gpio/gpio%d/direction' % pin):
     with open('/sys/class/gpio/unexport', 'w') as f:
@@ -56,17 +55,17 @@ def distance(rssi):
 
 def scan_beacon(q, l):
     scan = sp.Popen(('node', 'location.js'), stdout=sp.PIPE)
+    scan.stdout.readline()
     while True:
-        addr, rssi = scan.stdout.readline().split()
-        addr = addr.decode()
+        addr, rssi = scan.stdout.readline().decode().split(',')
         if addr in distances.keys():
             rssi = int(rssi)
             with l:
                 q.put((addr, rssi))
 
-rssi = mp.Queue()
+rssi_queue = mp.Queue()
 rssi_lock = mp.Lock()
-BLE = mp.Process(target=scan_beacon, args=(rssi, rssi_lock))
+BLE = mp.Process(target=scan_beacon, args=(rssi_queue, rssi_lock))
 
 
 # initialize socket; connect to data storage server
@@ -85,6 +84,7 @@ def close_socket(signal=None, frame=None):
 # main loop
 
 (x, y, w_prev, theta_prev, theta_curr) = (0, 150, 0, 0, 0)
+diameter = 3.4
 s_prev = False
 dt = 0.01
 tstart = time.perf_counter()
@@ -109,8 +109,8 @@ while True:
             x += pi*diameter*cos(theta)
             y += pi*diameter*sin(theta)
             theta_prev = theta_curr
-            values = []
             with rssi_lock:
-                while not rssi.empty():
-                    values.append(rssi.get())
+                while not rssi_queue.empty():
+                    addr, rssi = rssi_queue.get()
+                    # TODO particle filter
             server.send(pickle.dumps((x, y, ts)))
