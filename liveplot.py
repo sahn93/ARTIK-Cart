@@ -28,7 +28,6 @@ fig = plt.figure()
 ax1 = fig.add_subplot(1,1,1)
 ax1.set_xlim([0,300])
 ax1.set_ylim([0,300])
-ax1.set_aspect('equal', 'datalim')
 
 xs = []
 ys = []
@@ -41,10 +40,9 @@ def animate(i):
     xs.append(x)
     ys.append(y)
     ax1.clear()
+    ax1.plot(xs, ys)
     ax1.set_xlim([0,300])
     ax1.set_ylim([0,300])
-    ax1.set_aspect('equal', 'datalim')
-    ax1.plot(xs, ys)
 
 ani = animation.FuncAnimation(fig, animate, interval = 100)
 plt.show()

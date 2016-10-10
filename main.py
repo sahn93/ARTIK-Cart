@@ -32,7 +32,7 @@ imu.setCompassEnable(False)
 t_interval = imu.IMUGetPollInterval()/1000.0
 
 diameter = 3.4
-pin = 18
+pin = 12
 if os.path.exists('/sys/class/gpio/gpio%d/direction' % pin):
     with open('/sys/class/gpio/unexport', 'w') as f:
         f.write(str(pin))
