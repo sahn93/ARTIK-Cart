@@ -1,16 +1,17 @@
 #!/usr/bin/python3
 import os
 import sys
-import math
 import time
 import RTIMU
 import socket
 import signal
 import pickle
+import numpy as np
+import scipy.stats as st
 import subprocess as sp
 import multiprocessing as mp
-from config import CALIB_FILE, LOCATIONS, TXPOWER
 from math import pi, sqrt, pow, degrees, cos, sin
+from config import CALIB_FILE, LOCATIONS, TXPOWER
 
 
 # check admin rights
@@ -50,8 +51,12 @@ with open('/sys/class/gpio/gpio%d/direction' % pin, 'w') as f:
 
 # initialize beacon-related stuffs
 
-def distance(rssi):
-    return sqrt(pow(10, (TXPOWER - rssi) / 10))
+n = 2
+h = 200
+def pos_to_rssi(mypos, beaconpos):
+    diff = mypos - beaconpos
+    distance = sqrt(h**2+diff[0]**2+diff[1]**2)
+    return TXPOWER-10*n*np.log10(distance)
 
 def scan_beacon(q, l):
     scan = sp.Popen(('node', 'location.js'), stdout=sp.PIPE)
@@ -83,11 +88,16 @@ def close_socket(signal=None, frame=None):
 
 # main loop
 
-(x, y, w_prev, theta_prev, theta_curr) = (0, 150, 0, 0, 0)
 diameter = 3.4
 s_prev = False
 dt = 0.01
 tstart = time.perf_counter()
+(w_prev, theta_prev, theta_curr) = (0, 0, 0)
+mu = np.array([0, 150])
+Sigma = np.diag([5, 5])
+N = 1000
+particles = np.random.multivariate_normal(mu, Sigma, N).T
+x, y = np.mean(particles, 1)
 BLE.start()
 signal.signal(signal.SIGTERM, close_socket)
 signal.signal(signal.SIGINT, close_socket)
@@ -106,11 +116,16 @@ while True:
             ts = time.perf_counter() - tstart
             tstart += ts
             theta = 0.5*(theta_prev + theta_curr)
-            x += pi*diameter*cos(theta)
-            y += pi*diameter*sin(theta)
+            particles += pi*diameter*np.array([cos(theta), sin(theta)])[:, np.newaxis]
             theta_prev = theta_curr
+            w = 0
             with rssi_lock:
                 while not rssi_queue.empty():
+                    # particle filter using t-dist
                     addr, rssi = rssi_queue.get()
-                    # TODO particle filter
+                    loc = np.apply_along_axis(lambda x: pos_to_rssi(x, LOCATIONS[addr]), 0, particles)
+                    w += np.log(st.t.cdf(rssi+0.5, 4, loc, 2) - st.t.cdf(rssi-0.5, 4, loc, 2))
+            w = np.exp(w)
+            particles = particles[:, np.random.choice(N, N, p = w/sum(w))]
+            x, y = np.mean(particles, 1)
             server.send(pickle.dumps((x, y, ts)))
