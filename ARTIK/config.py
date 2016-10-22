@@ -1,5 +1,3 @@
-CALIB_FILE = "config/calib"
-
 TXPOWER = -70
 
 LOCATIONS = {'88:c2:55:10:f7:38': [0, 0],

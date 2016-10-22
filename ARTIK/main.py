@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-import RTIMU
+import serial
 import socket
 import signal
 import pickle
@@ -21,20 +21,9 @@ if os.getuid() != 0:
     sys.exit(1)
 
 
-# initialize gyroscope
+# initialize serial port
 
-s = RTIMU.Settings(CALIB_FILE)
-imu = RTIMU.RTIMU(s)
-if (not imu.IMUInit()):
-    print('IMU Init Failed')
-    sys.exit(1)
-else:
-    print('IMU Init Succeeded: ' + imu.IMUName())
-#imu.setSlerpPower(0.02)
-imu.setGyroEnable(True)
-imu.setAccelEnable(False)
-imu.setCompassEnable(False)
-t_interval = imu.IMUGetPollInterval()/1000.0
+tty = serial.Serial('/dev/ttySAC1')
 
 
 # initialize light sensor
@@ -102,12 +91,9 @@ BLE.start()
 signal.signal(signal.SIGTERM, close_socket)
 signal.signal(signal.SIGINT, close_socket)
 while True:
-    time.sleep(t_interval)
-    while imu.IMURead():
-        data = imu.getIMUData()
-        w_curr = data['gyro'][2]
-        theta_curr += 0.5*dt*(w_prev + w_curr)
-        w_prev = w_curr
+    w_curr = pickle.loads(tty.readline())
+    theta_curr += 0.5*dt*(w_prev + w_curr)
+    w_prev = w_curr
     with open('/sys/class/gpio/gpio%d/value' % pin, 'rb', 0) as f:
         s_curr = f.read() == b'0\n'
     if s_prev is not s_curr:
