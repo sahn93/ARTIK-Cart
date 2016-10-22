@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-import pickle
+import struct
 import RTIMU
 import serial
 
@@ -32,13 +32,19 @@ t_interval = imu.IMUGetPollInterval()/1000.0
 
 tty = serial.Serial('/dev/ttyAMA0')
 
+def close_serial(signal=None, frame=None):
+    print('GOOD BYE!')
+    tty.close()
+    sys.exit(0)
+
 
 # main loop: read sensor and send through uart
 
+signal.signal(signal.SIGTERM, close_serial)
+signal.signal(signal.SIGINT, close_serial)
 while True:
     time.sleep(t_interval)
     while imu.IMURead():
         data = imu.getIMUData()
         w_curr = data['gyro'][2]
-        tty.write(pickle.dumps(w_curr))
-        tty.write(b'\n')
+        tty.write(struct.pack('d', w_curr))

@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import serial
+import struct
 import socket
 import signal
 import pickle
@@ -72,6 +73,7 @@ print('Connected to the server')
 def close_socket(signal=None, frame=None):
     print('GOOD BYE!')
     server.close()
+    tty.close()
     sys.exit(0)
 
 
@@ -91,7 +93,7 @@ BLE.start()
 signal.signal(signal.SIGTERM, close_socket)
 signal.signal(signal.SIGINT, close_socket)
 while True:
-    w_curr = pickle.loads(tty.readline())
+    w_curr, = struct.unpack('d', tty.read(8))
     theta_curr += 0.5*dt*(w_prev + w_curr)
     w_prev = w_curr
     with open('/sys/class/gpio/gpio%d/value' % pin, 'rb', 0) as f:
