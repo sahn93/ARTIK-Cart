@@ -82,6 +82,7 @@ def close_socket(signal=None, frame=None):
 def handshaking(tty):
     while tty.in_waiting == 0:
         tty.write(b'A')
+        time.sleep(0.1)
     tty.reset_input_buffer()
 
 print('Waiting RPi...')

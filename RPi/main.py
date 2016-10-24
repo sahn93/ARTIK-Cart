@@ -27,7 +27,7 @@ def close_serial(signal=None, frame=None):
 
 def handshaking(tty):
     while tty.in_waiting == 0:
-        pass
+        time.sleep(0.1)
     tty.write(b'A')
     tty.reset_input_buffer()
 
