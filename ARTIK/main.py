@@ -12,7 +12,7 @@ import scipy.stats as st
 import subprocess as sp
 import multiprocessing as mp
 from math import pi, sqrt, pow, degrees, cos, sin
-from config import CALIB_FILE, LOCATIONS, TXPOWER
+from config import LOCATIONS, TXPOWER
 
 
 # check admin rights
