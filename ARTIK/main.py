@@ -6,7 +6,7 @@ import serial
 import struct
 import socket
 import signal
-import pickle
+import json
 import numpy as np
 import scipy.stats as st
 import subprocess as sp
@@ -128,4 +128,4 @@ while True:
             w = np.exp(w)
             particles = particles[:, np.random.choice(N, N, p = w/sum(w))]
             x, y = np.mean(particles, 1)
-            server.send(pickle.dumps((x, y, ts)))
+            server.send(json.dumps((x, y, ts)))
