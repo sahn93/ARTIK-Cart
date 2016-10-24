@@ -13,6 +13,28 @@ if os.getuid() != 0:
     sys.exit(1)
 
 
+# initialize serial port
+
+tty = serial.Serial('/dev/ttyAMA0', timeout=0.1)
+
+def close_serial(signal=None, frame=None):
+    print('GOOD BYE!')
+    tty.close()
+    sys.exit(0)
+
+
+# serial port handshaking
+
+def handshaking(tty):
+    while tty.in_waiting == 0:
+        pass
+    tty.write(b'A')
+    tty.reset_input_buffer()
+
+print('Waiting ARTIK...')
+handshaking(tty)
+
+
 # initialize gyroscope
 
 s = RTIMU.Settings("config.ini")
@@ -28,20 +50,11 @@ imu.setCompassEnable(False)
 t_interval = imu.IMUGetPollInterval()/1000.0
 
 
-# initialize serial port
-
-tty = serial.Serial('/dev/ttyAMA0')
-
-def close_serial(signal=None, frame=None):
-    print('GOOD BYE!')
-    tty.close()
-    sys.exit(0)
-
-
 # main loop: read sensor and send through uart
 
 signal.signal(signal.SIGTERM, close_serial)
 signal.signal(signal.SIGINT, close_serial)
+handshaking(tty)
 while True:
     time.sleep(t_interval)
     while imu.IMURead():

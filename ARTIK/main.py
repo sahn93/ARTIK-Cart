@@ -22,11 +22,6 @@ if os.getuid() != 0:
     sys.exit(1)
 
 
-# initialize serial port
-
-tty = serial.Serial('/dev/ttySAC1')
-
-
 # initialize light sensor
 
 pin = 12
@@ -70,11 +65,27 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect((host, int(port)))
 print('Connected to the server')
 
+
+# initialize serial port
+
+tty = serial.Serial('/dev/ttySAC1', timeout=0.1)
+
 def close_socket(signal=None, frame=None):
     print('GOOD BYE!')
     server.close()
     tty.close()
     sys.exit(0)
+
+
+# serial port handshaking
+
+def handshaking(tty):
+    while tty.in_waiting == 0:
+        tty.write(b'A')
+    tty.reset_input_buffer()
+
+print('Waiting RPi...')
+handshaking(tty)
 
 
 # main loop
@@ -92,6 +103,7 @@ x, y = np.mean(particles, 1)
 BLE.start()
 signal.signal(signal.SIGTERM, close_socket)
 signal.signal(signal.SIGINT, close_socket)
+handshaking(tty)
 while True:
     w_curr, = struct.unpack('d', tty.read(8))
     theta_curr += 0.5*dt*(w_prev + w_curr)
