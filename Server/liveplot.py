@@ -6,7 +6,8 @@ import json
 import signal
 import socket
 import pygame
-import multiprocessing as mp
+import queue
+import threading
 from pygame.locals import *
 
 pygame.init()
@@ -14,11 +15,10 @@ FPS = 60
 fpsClock = pygame.time.Clock()
 width = 1366
 height = 768
-screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
 pygame.display.set_caption("FANTASTIC BABY")
-#pygame.display.toggle_fullscreen()
 
-q = mp.Queue()
+q = queue.Queue()
 def f(q):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -32,10 +32,10 @@ frame = 0
 done = False
 BG = Color("#89CEBA")
 logo = pygame.transform.scale(pygame.image.load("artik.png"), (780//2, 270//2))
-#x, y, theta, t = (None, None, None, None)
-x, y, theta, t = (50, 50, 0, 0)
+x, y, theta, t = (None, None, None, None)
+#x, y, theta, t = (50, 50, 0, 0)
 dx, dy = (84, 84)
-receive = mp.Process(target=f, args=(q,))
+receive = threading.Thread(target=f, args=(q,))
 receive.start()
 while not done:
     for event in pygame.event.get():
