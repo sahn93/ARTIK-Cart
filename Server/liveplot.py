@@ -46,7 +46,7 @@ while not done:
     screen.blit(logo, (930, 300))
     col = Color("white" if frame < 30 else "red")
     if t is not None:
-        pygame.draw.circle(screen, col, (x+dx, y+dy), 10)
+        pygame.draw.circle(screen, col, (int(x)+dx, int(y)+dy), 10)
     pygame.display.update()
     try:
         data = q.get_nowait()
