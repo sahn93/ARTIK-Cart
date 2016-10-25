@@ -8,9 +8,9 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-host, port = os.environ['SERVER'].split(':')
+#host, port = os.environ['SERVER'].split(':')
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((host, int(port)))
+s.bind(('', 54321))
 s.listen(True)
 conn, addr = s.accept()
 
