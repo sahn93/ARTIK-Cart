@@ -2,48 +2,54 @@
 
 import os
 import sys
+import json
 import signal
 import socket
-import json
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import pygame
+import multiprocessing as mp
+from pygame.locals import *
 
-#host, port = os.environ['SERVER'].split(':')
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('', 54321))
-s.listen(True)
-conn, addr = s.accept()
+pygame.init()
+FPS = 60
+fpsClock = pygame.time.Clock()
+#width = 1366
+#height = 768
+width = 800
+height = 600
+screen = pygame.display.set_mode((width, height))
+#pygame.display.toggle_fullscreen()
 
-w = open('./data.csv', 'w')
-w.write('x, y, t\n')
+q = mp.Queue()
+def f(q):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(('', 54321))
+    s.listen(True)
+    conn, addr = s.accept()
+    while True:
+        q.put(conn.recv(1024))
 
-def safe_close(signal=None, frame=None):
-    print('GOOD BYE!')
-    w.close()
-    sys.exit(0)
-signal.signal(signal.SIGTERM, safe_close)
-signal.signal(signal.SIGINT, safe_close)
+frame = 0
+done = False
+x, y, theta, t = (None, None, None, None)
+receive = mp.Process(target=f, args=(q,))
+receive.start()
+while not done:
+    for event in pygame.event.get():
+        if event.type == KEYDOWN and event.key == K_ESCAPE:
+            done = True
+    screen.fill(Color("#89CEBA"))
+    if t is not None:
+        pygame.draw.circle(screen, Color("white"), (x, y), 10)
+    pygame.display.update()
+    try:
+        data = q.get_nowait()
+        print(data)
+        x, y, theta, t = json.loads(data.decode('utf-8'))
+    except:
+        pass
+    frame += 1
+    fpsClock.tick(FPS)
 
-fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1)
-ax1.set_xlim([0,300])
-ax1.set_ylim([0,300])
-
-xs = []
-ys = []
-
-def animate(i):
-    data = conn.recv(4096)
-    x, y, t = json.loads(data.decode('utf-8'))
-    print((x, y, t))
-    w.write("%f, %f, %f\n" % (x, y, t))
-    xs.append(x)
-    ys.append(y)
-    ax1.clear()
-    ax1.plot(xs, ys)
-    ax1.set_xlim([0,300])
-    ax1.set_ylim([0,300])
-
-ani = animation.FuncAnimation(fig, animate, interval = 100)
-plt.show()
-conn.close()
+receive.terminate()
+pygame.quit()

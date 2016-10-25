@@ -127,4 +127,4 @@ while True:
             particles += dx*np.array([cos(theta+theta_diff), sin(theta+theta_diff)])[:, np.newaxis]
             theta_prev = theta_curr
             x, y = np.mean(particles, 1)
-            server.send(json.dumps((x, y, ts)).encode('utf-8'))
+            server.send(json.dumps((x, y, theta_curr, ts)).encode('utf-8'))
