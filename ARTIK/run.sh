@@ -1,4 +1,2 @@
 #!/bin/bash
-while true; do
-    python3 /jubo/main.py
-done
+python3 /jubo/web.py
