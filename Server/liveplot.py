@@ -12,11 +12,10 @@ from pygame.locals import *
 pygame.init()
 FPS = 60
 fpsClock = pygame.time.Clock()
-#width = 1366
-#height = 768
-width = 800
-height = 600
+width = 1366
+height = 768
 screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("FANTASTIC BABY")
 #pygame.display.toggle_fullscreen()
 
 q = mp.Queue()
@@ -31,16 +30,23 @@ def f(q):
 
 frame = 0
 done = False
-x, y, theta, t = (None, None, None, None)
+BG = Color("#89CEBA")
+logo = pygame.transform.scale(pygame.image.load("artik.png"), (780//2, 270//2))
+#x, y, theta, t = (None, None, None, None)
+x, y, theta, t = (50, 50, 0, 0)
+dx, dy = (84, 84)
 receive = mp.Process(target=f, args=(q,))
 receive.start()
 while not done:
     for event in pygame.event.get():
         if event.type == KEYDOWN and event.key == K_ESCAPE:
             done = True
-    screen.fill(Color("#89CEBA"))
+    screen.fill(BG)
+    pygame.draw.rect(screen, Color("white"), (dx, dy, 800, 600), 4)
+    screen.blit(logo, (930, 300))
+    col = Color("white" if frame < 30 else "red")
     if t is not None:
-        pygame.draw.circle(screen, Color("white"), (x, y), 10)
+        pygame.draw.circle(screen, col, (x+dx, y+dy), 10)
     pygame.display.update()
     try:
         data = q.get_nowait()
@@ -48,8 +54,8 @@ while not done:
         x, y, theta, t = json.loads(data.decode('utf-8'))
     except:
         pass
-    frame += 1
+    frame = (frame+1)%FPS
     fpsClock.tick(FPS)
 
-receive.terminate()
 pygame.quit()
+sys.exit(0)
