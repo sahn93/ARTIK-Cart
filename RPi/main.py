@@ -4,6 +4,7 @@ import sys
 import time
 import struct
 import RTIMU
+import signal
 import serial
 
 # check admin rights
@@ -37,7 +38,7 @@ handshaking(tty)
 
 # initialize gyroscope
 
-s = RTIMU.Settings("config.ini")
+s = RTIMU.Settings("config")
 imu = RTIMU.RTIMU(s)
 if (not imu.IMUInit()):
     print('IMU Init Failed')

@@ -4,7 +4,7 @@ import os
 import sys
 import signal
 import socket
-import pickle
+import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -34,7 +34,7 @@ ys = []
 
 def animate(i):
     data = conn.recv(4096)
-    x, y, t = pickle.loads(data)
+    x, y, t = json.loads(data.decode('utf-8'))
     print((x, y, t))
     w.write("%f, %f, %f\n" % (x, y, t))
     xs.append(x)

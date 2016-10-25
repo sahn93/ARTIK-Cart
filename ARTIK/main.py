@@ -24,14 +24,9 @@ if os.getuid() != 0:
 
 # initialize light sensor
 
-pin = 12
-if os.path.exists('/sys/class/gpio/gpio%d/direction' % pin):
-    with open('/sys/class/gpio/unexport', 'w') as f:
-        f.write(str(pin))
-with open('/sys/class/gpio/export', 'w') as f:
-    f.write(str(pin))
-with open('/sys/class/gpio/gpio%d/direction' % pin, 'w') as f:
-    f.write('in')
+ANALOG_BASE = '/sys/devices/12d10000.adc/iio:device0/in_voltage%d_raw'
+PIN_WHEEL_REV = 0
+PIN_WHEEL_ANGLE = 1
 
 
 # initialize beacon-related stuffs
@@ -101,7 +96,6 @@ Sigma = np.diag([5, 5])
 N = 1000
 particles = np.random.multivariate_normal(mu, Sigma, N).T
 x, y = np.mean(particles, 1)
-BLE.start()
 signal.signal(signal.SIGTERM, close_socket)
 signal.signal(signal.SIGINT, close_socket)
 handshaking(tty)
@@ -109,24 +103,25 @@ while True:
     w_curr, = struct.unpack('d', tty.read(8))
     theta_curr += 0.5*dt*(w_prev + w_curr)
     w_prev = w_curr
-    with open('/sys/class/gpio/gpio%d/value' % pin, 'rb', 0) as f:
-        s_curr = f.read() == b'0\n'
+    with open(ANALOG_BASE % PIN_WHEEL_ANGLE, 'rb', 0) as f:
+        tmp = int(f.read())
+        if tmp < 200:
+            theta_diff = 0
+        elif tmp < 400:
+            theta_diff = pi*0.5
+        elif tmp < 535:
+            theta_diff = pi*1.5
+        else:
+            theta_diff = pi
+    with open(ANALOG_BASE % PIN_WHEEL_REV, 'rb', 0) as f:
+        s_curr = int(f.read()) < 300
     if s_prev is not s_curr:
         s_prev = s_curr
         if not s_prev:
             ts = time.perf_counter() - tstart
             tstart += ts
             theta = 0.5*(theta_prev + theta_curr)
-            particles += pi*diameter*np.array([cos(theta), sin(theta)])[:, np.newaxis]
+            particles += pi*diameter*np.array([cos(theta+theta_diff), sin(theta+theta_diff)])[:, np.newaxis]
             theta_prev = theta_curr
-            w = 0
-            with rssi_lock:
-                while not rssi_queue.empty():
-                    # particle filter using t-dist
-                    addr, rssi = rssi_queue.get()
-                    loc = np.apply_along_axis(lambda x: pos_to_rssi(x, LOCATIONS[addr]), 0, particles)
-                    w += np.log(st.t.cdf(rssi+0.5, 4, loc, 2) - st.t.cdf(rssi-0.5, 4, loc, 2))
-            w = np.exp(w)
-            particles = particles[:, np.random.choice(N, N, p = w/sum(w))]
             x, y = np.mean(particles, 1)
-            server.send(json.dumps((x, y, ts)))
+            server.send(json.dumps((x, y, ts)).encode('utf-8'))
