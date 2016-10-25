@@ -9,5 +9,6 @@ npm install
 ## How to run
 
 ```
-SERVER="HOST:PORT" python main.py
+crontab -e
+@reboot /bin/bash /jubo/run.sh
 ```

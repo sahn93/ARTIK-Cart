@@ -16,5 +16,6 @@ sudo python setup.py install
 ## How to run
 
 ```
-python main.py
+sudo crontab -e
+@reboot /bin/bash /jubo/run.sh
 ```
