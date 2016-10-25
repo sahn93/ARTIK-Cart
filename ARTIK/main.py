@@ -31,13 +31,14 @@ PIN_WHEEL_ANGLE = 1
 
 # initialize socket; connect to data storage server
 
-if os.path.isfile('/tmp/artik-gui.txt'):
-    with open('/tmp/artik-gui.txt', 'r') as f:
-        host = f.readline()
-else:
-    host = input('HOST: ')
-    with open('/tmp/artik-gui.txt', 'w') as f:
-        f.write(host)
+# if os.path.isfile('/tmp/artik-gui.txt'):
+#     with open('/tmp/artik-gui.txt', 'r') as f:
+#         host = f.readline()
+# else:
+#     host = input('HOST: ')
+#     with open('/tmp/artik-gui.txt', 'w') as f:
+#         f.write(host)
+host = input('HOST: ')
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect((host, 54321))
 print('Connected to the server')
